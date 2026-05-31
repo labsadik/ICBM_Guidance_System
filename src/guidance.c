@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h> // <--- ADDED THIS TO FIX THE WARNINGS
 #include "../include/guidance.h"
 #include "../include/types.h"
 #include "../include/navigation.h"      
@@ -55,11 +56,15 @@ void run_guidance_system(Missile *m, Target *t, NavigationSystem *nav) {
         }
     }
     
+    // Trigger Re-entry based on distance traveled (Apogee)
     if (m->state == STATE_SUBORBITAL) {
-        double dist = get_distance_to_target(m, t);
-        if (dist < 2000000) { 
+        // Calculate total straight-line distance to target
+        double total_initial_dist = sqrt(pow(t->x, 2) + pow(t->y, 2));
+        
+        // When missile has covered about 45% of the distance, it reaches apogee and falls
+        if (m->distance_traveled > total_initial_dist * 0.45) {
             m->state = STATE_REENTRY;
-            printf(">>> RE-ENTRY INITIATED. ATMOSPHERIC INTERFACE. <<<\n");
+            printf(">>> APOGEE REACHED. RE-ENTRY INITIATED. ATMOSPHERIC INTERFACE. <<<\n");
         }
     }
 }

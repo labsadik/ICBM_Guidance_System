@@ -18,13 +18,12 @@ void update_position(Missile *m, Target *t, NavigationSystem *nav, double dt) {
     
     double ux = 0, uy = 0;
     if (h_dist > 0) {
-        ux = dx / h_dist; // Normalized X direction
-        uy = dy / h_dist; // Normalized Y direction
+        ux = dx / h_dist; 
+        uy = dy / h_dist; 
     }
 
     // --- HORIZONTAL MOVEMENT ---
     if (m->state == STATE_EVASIVE && nav->gyroscopic_ins_active) {
-        // Juggling / Evasive Logic
         double jitter_strength = 3000.0; 
         double jitter_x = ((double)rand() / RAND_MAX - 0.5) * jitter_strength;
         double jitter_y = ((double)rand() / RAND_MAX - 0.5) * jitter_strength;
@@ -32,22 +31,22 @@ void update_position(Missile *m, Target *t, NavigationSystem *nav, double dt) {
         m->x += move_step * ux * 0.9 + jitter_x * dt;
         m->y += move_step * uy * 0.9 + jitter_y * dt;
     } else {
-        // Standard Ballistic Path aimed at target
         m->x += move_step * ux * 0.9;
         m->y += move_step * uy * 0.9;
     }
 
     // --- ALTITUDE LOGIC (Pitch Arc) ---
-    // Simulate a realistic ICBM arc (Peak ~1200 km)
     double target_alt = 0;
     if (m->state == STATE_LAUNCH || m->state == STATE_BOOST) {
         target_alt = 500000; // 500 km during boost
     } else if (m->state == STATE_SUBORBITAL) {
         target_alt = 1200000; // 1200 km in space
-    } else if (m->state == STATE_REENTRY || m->state == STATE_TERMINAL) {
-        target_alt = 0; // Descend to ground
+    } else if (m->state == STATE_REENTRY) {
+        target_alt = 100000; // Drop to 100 km upper atmosphere
+    } else if (m->state == STATE_TERMINAL) {
+        target_alt = 0; // Dive to ground
     } else if (m->state == STATE_EVASIVE) {
-        target_alt = 800000; // Mid-air juking
+        target_alt = 800000; 
     }
     
     // Smoothly adjust altitude towards target profile
@@ -55,7 +54,9 @@ void update_position(Missile *m, Target *t, NavigationSystem *nav, double dt) {
         m->z += move_step * 0.5;
         if (m->z > target_alt) m->z = target_alt;
     } else if (m->z > target_alt) {
-        m->z -= move_step * 0.4; // Fall faster
+        // Fall faster during terminal/reentry
+        double fall_speed = (m->state == STATE_TERMINAL) ? 0.8 : 0.4;
+        m->z -= move_step * fall_speed; 
         if (m->z < target_alt) m->z = target_alt;
     }
 

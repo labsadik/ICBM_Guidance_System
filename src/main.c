@@ -9,9 +9,25 @@
 #include "../include/propulsion.h"
 #include "../include/guidance.h"
 
+const char* get_phase_name(int state) {
+    switch(state) {
+        case 0: return "IDLE";
+        case 1: return "AWAITING CMD";
+        case 2: return "LAUNCH";
+        case 3: return "BOOST";
+        case 4: return "SUBORBITAL";
+        case 5: return "REENTRY";
+        case 6: return "EVASIVE";
+        case 7: return "TERMINAL";
+        case 8: return "DESTROYED";
+        case 9: return "OUT OF RANGE";
+        default: return "UNKNOWN";
+    }
+}
+
 void print_status(Missile *m, Target *t, NavigationSystem *nav, Warhead *w) {
     printf("\n=== RS-28 SARMAT (SATAN II) TELEMETRY ===\n");
-    printf("Time: %.2f s | Phase: %d\n", m->time_elapsed, m->state);
+    printf("Time: %.2f s | Phase: %d (%s)\n", m->time_elapsed, m->state, get_phase_name(m->state));
     printf("Speed: Mach %.2f (%.2f m/s)\n", m->mach, m->speed);
     printf("Altitude: %.2f km | Dist To Tgt: %.2f km\n", 
            m->z / 1000.0, get_distance_to_target(m, t) / 1000.0);
@@ -34,15 +50,16 @@ void receive_commander_orders(Target *t, Warhead *w) {
     Sleep(1000);
     
     strcpy(t->id, "TGT-STRATEGIC-01");
-    t->x = 16000000.0; 
-    t->y = 12000000.0;
+    // FIXED: Target is now ~14,400 km away, well within the 18,000 km MAX_RANGE
+    t->x = 12000000.0; // 12,000 km X
+    t->y = 8000000.0;  // 8,000 km Y
     
     strcpy(w->type, "MIRV Bus / Heavy");
     w->yield_kg = 8800.0;
     w->warhead_count = 15; 
     
     printf(">>> ORDER RECEIVED: LAUNCH RS-28 SARMAT\n");
-    printf(">>> TARGET: %s (RANGE: 16,000 km)\n", t->id);
+    printf(">>> TARGET: %s (RANGE: 14,400 km)\n", t->id);
     printf(">>> PAYLOAD: %.1f kg (Avangard HGV Capable)\n", w->yield_kg);
     printf(">>> TRAJECTORY: POLAR (Evading Radar Coverage)\n\n");
     Sleep(1500);
@@ -54,7 +71,7 @@ int main() {
     NavigationSystem nav_sys = {
         .radar_active = true,
         .satellite_link_active = true,
-        .gyroscopic_ins_active = true, // Turned on so evasive logic works
+        .gyroscopic_ins_active = true, 
         .stellar_navigation_active = false,
         .accuracy_meters = 5.0
     };
@@ -94,7 +111,6 @@ int main() {
 
         sarmat.time_elapsed += dt;
 
-        // Print telemetry every 1 second (2 ticks)
         print_counter++;
         if (print_counter >= 2) {
             print_status(&sarmat, &enemy_target, &nav_sys, &payload);

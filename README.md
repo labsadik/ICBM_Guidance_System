@@ -146,7 +146,7 @@ The K-26 project is a computer simulation written in the C programming language.
 
 ### Quick Start Command
 ```powershell
-cd C:\Users\Sadik\Desktop\MissileGuidanceSystem
+cd C:\MissileGuidanceSystem
 .\build.bat
 ```
 ```</think>### Optional: Update the Code to match "K-26"
