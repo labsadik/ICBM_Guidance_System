@@ -1,4 +1,3 @@
-
 # K-26 "Stratosphere" - Advanced ICBM Guidance System
 
 ## Project Overview
